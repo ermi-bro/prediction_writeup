@@ -13,14 +13,82 @@ This human activity recognition research has traditionally focused on discrimina
 In this project I will try to predict "which" activity (exactly according to the specication (Class A) , throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E).) was performed at a specific point in time.   
 
 
-The data has been downloaded from the http://groupware.les.inf.puc-rio.br/har website. The train and test data the will be used in the project is provided. Before 
+The data is downloaded from the http://groupware.les.inf.puc-rio.br/har website. The caret package will be used in the prediction.   
 
 ## Loading and preprocessing the data
 
-```{r loadData}
+```{r loaddata}
     library(caret)
-    # set working directory
-    setwd("C:/rproj/data_science/Practical_Machine_Learning/week3/assign")
-    training <- read.csv("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv")
-    testing <- read.csv("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv")
+    training <- read.csv("pml-training.csv", head = T)
+    testing <- read.csv("pml-testing.csv",, head = T)
+
+    # check if there are missing value in the trai and test datasets
+    sum(is.na(training))
+    sum(is.na(testing))
+```
+
+## Preprocessing the data (remove missing variables)
+There are quite a few variables in the pml-training and pml-testing datasets with missing values. These variables are dropped from the two datasets.   
+
+```{r preparation}
+training <- training[,c("user_name", "raw_timestamp_part_1", "raw_timestamp_part_2", "cvtd_timestamp", 
+                "new_window", "num_window", "roll_belt", "pitch_belt", "yaw_belt", "total_accel_belt", 
+                "gyros_belt_x", "gyros_belt_y", "gyros_belt_z", "accel_belt_x", "accel_belt_y", 
+                "accel_belt_z", "magnet_belt_x", "magnet_belt_y", "magnet_belt_z", "roll_arm", 
+                "pitch_arm", "yaw_arm", "total_accel_arm", "gyros_arm_x", "gyros_arm_y", 
+                "gyros_arm_z", "accel_arm_x", "accel_arm_y", "accel_arm_z", "magnet_arm_x", 
+                "magnet_arm_y", "magnet_arm_z", "roll_dumbbell", "pitch_dumbbell", 
+                "yaw_dumbbell", "gyros_dumbbell_x", "gyros_dumbbell_y", "gyros_dumbbell_z", 
+                "accel_dumbbell_x", "accel_dumbbell_y", "accel_dumbbell_z", "magnet_dumbbell_x",
+                "magnet_dumbbell_y", "magnet_dumbbell_z", "roll_forearm", "pitch_forearm", 
+                "yaw_forearm", "total_accel_forearm", "gyros_forearm_x", "gyros_forearm_y", 
+                "gyros_forearm_z", "accel_forearm_x", "accel_forearm_y", "accel_forearm_z", 
+                "magnet_forearm_x", "magnet_forearm_y", "magnet_forearm_z", "classe")]
+
+testing <- testing[,c("user_name", "raw_timestamp_part_1", "raw_timestamp_part_2", "cvtd_timestamp", 
+                        "new_window", "num_window", "roll_belt", "pitch_belt", "yaw_belt", "total_accel_belt", 
+                        "gyros_belt_x", "gyros_belt_y", "gyros_belt_z", "accel_belt_x", "accel_belt_y", 
+                        "accel_belt_z", "magnet_belt_x", "magnet_belt_y", "magnet_belt_z", "roll_arm", 
+                        "pitch_arm", "yaw_arm", "total_accel_arm", "gyros_arm_x", "gyros_arm_y", 
+                        "gyros_arm_z", "accel_arm_x", "accel_arm_y", "accel_arm_z", "magnet_arm_x", 
+                        "magnet_arm_y", "magnet_arm_z", "roll_dumbbell", "pitch_dumbbell", 
+                        "yaw_dumbbell", "gyros_dumbbell_x", "gyros_dumbbell_y", "gyros_dumbbell_z", 
+                        "accel_dumbbell_x", "accel_dumbbell_y", "accel_dumbbell_z", "magnet_dumbbell_x",
+                        "magnet_dumbbell_y", "magnet_dumbbell_z", "roll_forearm", "pitch_forearm", 
+                        "yaw_forearm", "total_accel_forearm", "gyros_forearm_x", "gyros_forearm_y", 
+                        "gyros_forearm_z", "accel_forearm_x", "accel_forearm_y", "accel_forearm_z", 
+                        "magnet_forearm_x", "magnet_forearm_y", "magnet_forearm_z", "problem_id")]
+
+```
+
+## Mode Fitting
+I use randomforest algorithm to predict "which" activity (exactly according to the specication (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E)) was performed at a specific point in time. The prediction is performed on testing data.   
+
+1) k-fold Cross Validation
+The k-fold cross validation method involves splitting the dataset into k-subsets. For each subset is held out while the model is trained on all other subsets. This process is completed until accuracy is determine for each instance in the dataset, and an overall accuracy estimate is provided.
+
+In this prediction, 10-fold cross validation method is used as follows:   
+```{r corss-validation}
+    # define training control
+    train_control <- trainControl(method="cv", number=10)
+```
+
+2) Fit a model
+Randome Forest algorithm model is used. Model fit from the train function, I use the 19622 samples in a training set and 57 predictors. The model uses corss-validation with 10 fold.   
+```{r modelfit}
+    modelFit <- train(classe ~., data=training, trControl=train_control, method="rf")
+```
+## Estimating Model Accuracy
+Accuracy estimate shows the model is %99.1 accurate.   
+
+```{r mode accuracy}
+    modelFit
+```
+
+## Prediction new values on testing data
+I predict the model on the test dataset as follows:   
+```{r prediction}
+    predictions <- predict(modelFit, newdata=testing)
+    # Here are set of predications 
+    predictions
 ```
